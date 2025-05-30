@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <link rel="stylesheet" href="{{ url_for('static', filename='signup.css') }}">
+        <title>Login</title>
+
+
+    </head>
+    <body>
+        <h1>Polyglot Frog</h1>
+        <p>Log in to start learning!</p>
+
+        <form method="POST" action="/login">
+            <label for="username">Username:</label><br>
+            <input type="text" id="username" name="username" required><br>
+
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password" required><br>
+
+            <div class="button-row">
+                <input type="button" value="Don't have an account? Sign Up!" onclick="window.location.href='/signup'">
+                <input type="button" value="Forgot password?">
+            </div>
+
+            <input type="submit" value="Log in">
+        </form>
+
+    </body>
+</html>

@@ -1,0 +1,28 @@
+# Environment files
+.env
+.env.*
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Flask/Migrations
+instance/
+*.db
+*.sqlite3
+migrations/
+
+# Secrets
+secrets.json
+config.json
+*.pem
+*.key
+*.crt
+
+# VSCode
+.vscode/
+
+# OS-specific
+.DS_Store
+Thumbs.db
