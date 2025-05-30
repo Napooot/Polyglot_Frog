@@ -4,7 +4,6 @@ from dotenv import load_dotenv, dotenv_values
 from flask import Flask, render_template, request, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
 app = Flask(__name__)
 
 load_dotenv()
@@ -42,7 +41,7 @@ def login():
 
             # Check if the raw password matches the hash
             if check_password_hash(storedHash, passwordRaw):
-                return "Login Success!"
+                return "Log in successful!"
             else:
                 return "Invalid username or password"
         else:
@@ -81,9 +80,9 @@ def signup():
         cur.close()
         conn.close()
 
-        return "Account created successfully!"
+        return render_template('login.html')
     
-    return render_template('signup.html')  # render form on GET
+    return render_template('signup.html') 
 
 if __name__ == "__main__":
     app.run(debug=True)
