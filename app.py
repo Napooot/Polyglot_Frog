@@ -10,7 +10,11 @@ load_dotenv()
 
 @app.route('/')
 def home():
-    return redirect(url_for('login')) 
+    return redirect(url_for('chat')) 
+
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    return render_template('chat.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

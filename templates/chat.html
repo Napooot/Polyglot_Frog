@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+        <title>Chat</title>
+
+        <script>
+            function changeLabel() {
+                const button = document.getElementById('record')
+                
+                if (button.value === 'Record') {
+                    button.value = 'Stop Recording';
+                }
+                else {
+                    button.value = 'Record';
+                }
+            }
+        </script>
+    </head>
+
+    <body>
+        <h1>Welcome to the Chat!</h1>
+
+        <div class="Chat">
+            <div class="chat-box">
+                <label for="input">Your Chat:</label>
+                <textarea id="input" name="input" rows="10" readonly></textarea>
+            </div>
+
+            <div class="record-area">
+                <input type="button" id="record" value="Record" onclick="changeLabel()">
+                <p class="hint">or type!</p>
+            </div>
+            
+            <div class="chat-box">
+                <label for="output">AI Chat:</label>
+                <textarea id="output" name="output" rows="10" readonly></textarea>
+            </div>
+        </div>
+
+    </body>
+</html>
