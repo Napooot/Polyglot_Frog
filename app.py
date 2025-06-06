@@ -1,20 +1,58 @@
 import os
 import psycopg2
+import io
 from dotenv import load_dotenv, dotenv_values
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from openai import OpenAI
+
 
 app = Flask(__name__)
-
 load_dotenv()
+
+client = OpenAI(api_key=os.getenv("OPENAI_AI_KEY").strip())
+app.secret_key = os.getenv("SECRET_KEY")
 
 @app.route('/')
 def home():
-    return redirect(url_for('chat')) 
+    return redirect(url_for('fish')) 
+
+@app.route('/fish')
+def fish():
+    return render_template('fish.html')
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
     return render_template('chat.html')
+
+@app.route('/transcribe', methods=['POST'])
+def transcribe():
+    file = request.files["audio"]
+    buffer = io.BytesIO(file.read())
+    buffer.name = "audio.webm"
+
+    response = client.audio.transcriptions.create(
+        model='whisper-1',
+        file=buffer
+    )
+
+    return {"output": response.text}
+
+@app.route('/output_backend', methods=['POST'])
+def output_backend():
+    data = request.json
+    userInput = data.get("input")
+
+    input = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a friendly, multilingual assistant. Your task is to have a nice conversation and respond to the user."},
+            {"role": "user", "content": userInput}
+        ]
+    )
+
+    return jsonify({"output": input.choices[0].message.content})
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -45,11 +83,14 @@ def login():
 
             # Check if the raw password matches the hash
             if check_password_hash(storedHash, passwordRaw):
-                return "Log in successful!"
+                flash('You were successfully logged in')
+                return redirect(url_for('chat')) 
             else:
-                return "Invalid username or password"
+                flash('Invalid username or password. Please try again.')
+                return redirect(url_for('login')) 
         else:
-            return "User not found"
+            flash("User not found")
+            return redirect(url_for('signup')) 
         
     return render_template('login.html')
 
@@ -84,7 +125,7 @@ def signup():
         cur.close()
         conn.close()
 
-        return render_template('login.html')
+        return redirect(url_for('login')) 
     
     return render_template('signup.html') 
 
