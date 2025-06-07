@@ -35,8 +35,7 @@ function toggleRecording() {
                     fetch("/transcribe", {
                         method: "POST",
                         body: formData
-                    })
-                    .then((response) => response.json())
+                    }).then((response) => response.json())
                     .then((data) => {
                         inputChat.value += "\n\n" + data.output
                         
@@ -48,10 +47,7 @@ function toggleRecording() {
                         })
                         .then((response) => response.json())
                         .then((data) => {
-                            const audio = new Audio("data:audio/mp3;base64," + data.audio);
-                            audio.play();
                             outputChat.value += "\n\n" + data.output
-                            
                         });
                     });
 
