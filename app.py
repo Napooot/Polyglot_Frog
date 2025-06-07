@@ -1,16 +1,85 @@
 import os
 import psycopg2
+import io
+import base64
+import threading
+import uuid
+
 from dotenv import load_dotenv, dotenv_values
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, flash, jsonify, session
 from werkzeug.security import generate_password_hash, check_password_hash
+from openai import OpenAI
+
 
 app = Flask(__name__)
-
 load_dotenv()
+audioCache = {}
+
+client = OpenAI(api_key=os.getenv("OPENAI_AI_KEY").strip())
+app.secret_key = os.getenv("SECRET_KEY")
 
 @app.route('/')
 def home():
-    return redirect(url_for('login')) 
+    return redirect(url_for('chat')) 
+
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    return render_template('chat.html')
+
+@app.route('/transcribe', methods=['POST'])
+def transcribe():
+    file = request.files["audio"]
+    buffer = io.BytesIO(file.read())
+    buffer.name = "audio.webm"
+
+    response = client.audio.transcriptions.create(
+        model='whisper-1',
+        file=buffer
+    )
+
+    return {"output": response.text}
+
+@app.route('/output_backend', methods=['POST'])
+def output_backend():
+    data = request.json
+    userInput = data.get("input")
+    
+    # Get text response from OpenAI
+    input = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a friendly, multilingual assistant. Your task is to have a conversation with the user and correct any mistakes they make while speaking. They are new to the language and are learning. Maintain a friendly tone that is open to teaching."},
+            {"role": "user", "content": userInput}
+        ]
+    )
+
+    # Processing for TTS
+    textOutput = input.choices[0].message.content
+
+    def generate_audio(text, session_id):
+        tts = client.audio.speech.create(
+            model="tts-1",
+            voice="shimmer",
+            input=text
+        )
+        audio = base64.b64encode(tts.content).decode('utf-8')
+        # Store audio in a cache (e.g., in-memory dict, Redis, or file)
+        audioCache[session_id] = audio
+
+    session_id = str(uuid.uuid4())
+    threading.Thread(target=generate_audio, args=(textOutput, session_id)).start()
+    return jsonify({
+        "output": textOutput,
+        "audio": session_id
+    })
+
+@app.route('/get_audio/<session_id>')
+def get_audio(session_id):
+    audio = audioCache.get(session_id)
+    if audio:
+        return jsonify({"audio": audio})
+    else:
+        return jsonify({"audio": None}), 202  
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -41,11 +110,14 @@ def login():
 
             # Check if the raw password matches the hash
             if check_password_hash(storedHash, passwordRaw):
-                return "Log in successful!"
+                flash('You were successfully logged in')
+                return redirect(url_for('chat')) 
             else:
-                return "Invalid username or password"
+                flash('Invalid username or password. Please try again.')
+                return redirect(url_for('login')) 
         else:
-            return "User not found"
+            flash("User not found")
+            return redirect(url_for('signup')) 
         
     return render_template('login.html')
 
@@ -80,7 +152,7 @@ def signup():
         cur.close()
         conn.close()
 
-        return render_template('login.html')
+        return redirect(url_for('login')) 
     
     return render_template('signup.html') 
 

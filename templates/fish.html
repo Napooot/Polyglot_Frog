@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish Chat Background</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fish.css') }}">
+    
+</head>
+<body>
+    <div class="background">
+        <canvas id="fishCanvas"></canvas>
+    </div>
+
+    <div class="chat-box">
+        <textarea placeholder="Your Chat..." readonly></textarea>
+        <textarea placeholder="AI Chat..." readonly></textarea>
+    </div>
+
+    <script src="{{ url_for('static', filename='fish.js') }}"></script>
+</body>
+</html>
