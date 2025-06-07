@@ -26,6 +26,49 @@ def fish():
 def chat():
     return render_template('chat.html')
 
+@app.route('/transcribe', methods=['POST'])
+def transcribe():
+    file = request.files["audio"]
+    buffer = io.BytesIO(file.read())
+    buffer.name = "audio.webm"
+
+    response = client.audio.transcriptions.create(
+        model='whisper-1',
+        file=buffer
+    )
+
+    return {"output": response.text}
+
+@app.route('/output_backend', methods=['POST'])
+def output_backend():
+    data = request.json
+    userInput = data.get("input")
+    
+    # Get text response from OpenAI
+    input = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a friendly, multilingual assistant. Your task is to have a conversation with the user and correct any mistakes they make while speaking. They are new to the language and are learning. Maintain a friendly tone that is open to teaching."},
+            {"role": "user", "content": userInput}
+        ]
+    )
+
+    # Processing for TTS
+    textOutput = input.choices[0].message.content
+
+    tts = client.audio.speech.create(
+        model="tts-1",
+        voice="shimmer",
+        input=textOutput
+    )
+
+    # Convert the audio content to base64 for frontend usage
+    audio = base64.b64encode(tts.content).decode('utf-8')
+    return jsonify({
+        "output": textOutput,
+        "audio": audio
+    })
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
