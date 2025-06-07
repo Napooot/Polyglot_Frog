@@ -47,9 +47,8 @@ function toggleRecording() {
                         })
                         .then((response) => response.json())
                         .then((data) => {
-                            const audio = new Audio("data:audio/mp3;base64," + data.audio)
-                            audio.play();
                             outputChat.value += "\n\n" + data.output
+                            pollAudio(data.audio);
                         });
                     });
 
@@ -72,4 +71,18 @@ function toggleRecording() {
         mediaRecorder.stop();
         recordBtn.value = 'Record';
     }
+}
+
+function pollAudio(sessionId, playbackRate = 1.0) {
+  fetch(`/get_audio/${sessionId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.audio) {
+        const audio = new Audio("data:audio/mp3;base64," + data.audio);
+        audio.playbackRate = playbackRate;
+        audio.play();
+      } else {
+        setTimeout(() => pollAudio(sessionId, playbackRate), 1000);
+      }
+    });
 }
